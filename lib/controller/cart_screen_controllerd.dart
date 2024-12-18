@@ -8,6 +8,8 @@ import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 class CartScreenController with ChangeNotifier {
   static late Database database;
   List<Map> cartItems = [];
+  double totalPrice = 0.0;
+
 
   static Future<void> initDb() async {
     if (kIsWeb) {
@@ -38,7 +40,7 @@ class CartScreenController with ChangeNotifier {
     for (int i = 0;i<cartItems.length;i++){
       if(cartItems[i]["productId"]==productId){
 
-         var alreadyadded = true;                                                                                                     
+         alreadyAdded = true;                                                                                                     
       }
     }
     if (alreadyAdded ==false ){await database.rawInsert(
@@ -54,22 +56,37 @@ class CartScreenController with ChangeNotifier {
     notifyListeners();
   }
 
-  removeAnItem() {}
+  removeAnItem(int id) async {
+    await database.rawDelete('DELETE FROM Test WHERE name = ?', [id]);
+    getAllItems();
+    notifyListeners();
+  }
+  
 
 
   Future <void> decrementQty(int qty,int id) async {
     if(qty>=2){
       qty--;
-      database.rawUpdate('UPDATE Cart SET qty = ?, WHERE id = ?',
+     await database.rawUpdate('UPDATE Cart SET qty = ? WHERE id = ?',
   [qty,id]);
-  getAllItems();
+  await getAllItems();
     }
   }
 
   Future <void> incrementQty(int qty,int id) async {
       qty++;
-      database.rawUpdate('UPDATE Cart SET qty = ?, WHERE id = ?',
+    await  database.rawUpdate('UPDATE Cart SET qty = ? WHERE id = ?',
   [qty,id]);
-  getAllItems();
+ await getAllItems();
   }
+  
+  void calculateTotal(){
+    totalPrice = 0.0;
+    for(int i=0;i<cartItems.length;i++ ){
+      double currentItemPrice = cartItems[i]['price']*cartItems[i]['qty'];
+      totalPrice = totalPrice + currentItemPrice;
+    }
+    notifyListeners();
+  }
+
 }
